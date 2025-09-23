@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
+	"github.com/morodik/convoy/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -38,7 +39,7 @@ func Init() {
 		log.Fatal("Не удалось подключиться", err)
 	}
 
-	err = DB.AutoMigrate(&models.User{}, &models.Note{})
+	err = DB.AutoMigrate(&models.User{})
 	if err != nil {
 		log.Fatal("Не удалось создать таблицу", err)
 	}
