@@ -3,6 +3,7 @@ package services
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/morodik/convoy/internal/db"
@@ -15,6 +16,13 @@ import (
 )
 
 var jwtKey []byte
+
+func InitJWTKey() {
+	jwtKey = []byte(os.Getenv("JWT_SECRET_KEY"))
+	if len(jwtKey) == 0 {
+		log.Fatal("JWT_SECRET_KEY не установлен")
+	}
+}
 
 type LoginCredentials struct {
 	Email    string `json:"email" binding:"required,email"`
@@ -71,9 +79,27 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	// Генерируем токен сразу после регистрации
+	expiration := time.Now().Add(24 * time.Hour)
+	claims := &Claims{
+		UserID: newUser.ID,
+		Email:  newUser.Email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expiration),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenStr, err := token.SignedString(jwtKey)
+	if err != nil {
+		log.Printf("Ошибка генерации токена: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка генерации токена"})
+		return
+	}
+
 	c.JSON(http.StatusCreated, gin.H{
 		"message":  "Регистрация успешна",
 		"username": newUser.Username,
+		"token":    tokenStr,
 	})
 }
 
@@ -115,7 +141,10 @@ func Login(c *gin.Context) {
 	}
 
 	log.Printf("Успешный вход: %s", creds.Email)
-	c.JSON(http.StatusOK, gin.H{"token": tokenStr})
+	c.JSON(http.StatusOK, gin.H{
+		"token":    tokenStr,
+		"username": user.Username,
+	})
 }
 
 func Logout(c *gin.Context) {
