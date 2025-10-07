@@ -12,6 +12,10 @@ type UserRepository struct {
 	db *gorm.DB
 }
 
+func (r *UserRepository) CreateConvoy(ctx context.Context, convoy *models.Convoy) (*models.Convoy, error) {
+	panic("unimplemented")
+}
+
 func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }

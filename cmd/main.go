@@ -25,6 +25,10 @@ func main() {
 	userService := services.NewUserService(userRepo)
 	profileHandler := handlers.NewProfileHandler(userService)
 
+	convoyRepo := repository.NewConvoyRepository(db.DB)
+	convoyService := services.NewConvoyService(convoyRepo)
+	convoyHandler := handlers.NewConvoyHandler(convoyService)
+
 	r := gin.Default()
 	r.SetTrustedProxies(nil) // разрешить все локальные подключения (опционально, можно удалить)
 
@@ -41,6 +45,7 @@ func main() {
 	r.POST("/register", services.Register)
 	r.POST("/login", services.Login)
 	r.POST("/logout", services.Logout)
+	r.POST("/convoys", services.AuthMiddleware(), convoyHandler.CreateConvoy)
 
 	r.GET("/profile", services.AuthMiddleware(), profileHandler.GetProfile)
 	r.PUT("/profile", services.AuthMiddleware(), profileHandler.UpdateProfile)
